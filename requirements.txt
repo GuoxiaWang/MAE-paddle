@@ -1,0 +1,2 @@
+visualdl
+git+https://github.com/PaddlePaddle/PLSC@master
