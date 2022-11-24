@@ -13,6 +13,7 @@ import builtins
 import datetime
 import os
 import time
+import numpy as np
 from collections import defaultdict, deque
 from pathlib import Path
 
@@ -374,3 +375,20 @@ def accuracy(output, target, topk=(1,)):
     pred = pred.t()
     correct = (pred == target.reshape([1, -1]).expand_as(pred)).astype(paddle.float32)
     return [correct[:min(k, maxk)].reshape([-1]).sum(0) * 100. / batch_size for k in topk]
+
+def save_np(filename, obj):
+    basename, ext = os.path.splitext(filename)
+    filename = basename + f'_{dist.get_rank()}' + ext
+    with open(filename, 'wb') as f:
+        np.save(f, obj)
+        
+
+def load_np(filename):
+    basename, ext = os.path.splitext(filename)
+    filename = basename + f'_{dist.get_rank()}' + ext
+    with open(filename, 'rb') as f:
+        obj = np.load(f, allow_pickle=True)
+    if obj.size == 1:
+        return obj.item()
+    else:
+        return obj

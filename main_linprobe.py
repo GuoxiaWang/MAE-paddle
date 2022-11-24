@@ -152,7 +152,7 @@ def main(args):
 
     transform_val = transforms.Compose([
             transforms.DecodeImage(to_rgb=True, channel_first=False),
-            transforms.ResizeImage(size=256, interpolation="bicubic", backend="pil"),  # 3 is bicubic
+            transforms.ResizeImage(resize_short=256, interpolation="bicubic", backend="pil"),  # 3 is bicubic
             transforms.CenterCropImage(size=224),
             transforms.NormalizeImage(scale=1.0/255.0, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], order='hwc'),
             transforms.ToCHWImage()])
@@ -213,7 +213,7 @@ def main(args):
         checkpoint_model = checkpoint['model']
         state_dict = model.state_dict()
         for k in ['head.weight', 'head.bias']:
-            if k in checkpoint_model and checkpoint_model[k].shape != state_dict[k].shape:
+            if k in checkpoint_model and list(checkpoint_model[k].shape) != list(state_dict[k].shape):
                 print(f"Removing key {k} from pretrained checkpoint")
                 del checkpoint_model[k]
 
@@ -223,10 +223,10 @@ def main(args):
         # load pre-trained model
         model.set_state_dict(checkpoint_model)
 
-        if args.global_pool:
-            assert set(msg.missing_keys) == {'head.weight', 'head.bias', 'fc_norm.weight', 'fc_norm.bias'}
-        else:
-            assert set(msg.missing_keys) == {'head.weight', 'head.bias'}
+        # if args.global_pool:
+        #     assert set(msg.missing_keys) == {'head.weight', 'head.bias', 'fc_norm.weight', 'fc_norm.bias'}
+        # else:
+        #     assert set(msg.missing_keys) == {'head.weight', 'head.bias'}
 
         # manually initialize fc layer: following MoCo v3
         trunc_normal_(model.head.weight, std=0.01)
@@ -234,10 +234,15 @@ def main(args):
     # for linear prob only
     # hack: revise model's head with BN
     model.head = paddle.nn.Sequential(paddle.nn.BatchNorm1D(model.head.weight.shape[0], weight_attr=False, bias_attr=False, epsilon=1e-6), model.head)
-    # freeze all but the head
+    
+    # freeze all first but the head
+    # Note(GuoxiaWang): Although weight_attr and bias_attr are set to False 
+    # but weight, bias, _mean, _variance will still be created as param,
+    # so we only set p.stop_gradient = False in lastest classifer layer
     for _, p in model.named_parameters():
         p.stop_gradient = True
-    for _, p in model.head.named_parameters():
+        
+    for _, p in model.head[1].named_parameters():
         p.stop_gradient = False
 
     model_without_ddp = model

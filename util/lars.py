@@ -40,7 +40,7 @@ class LARS(plsc.optimizer.optimizer.Optimizer):
                                     one)
                     dp = dp.multiply(q)
 
-                param_state = self.state[p]
+                param_state = self.state[p.name]
                 if 'mu' not in param_state:
                     param_state['mu'] = paddle.zeros_like(p)
                 mu = param_state['mu']
