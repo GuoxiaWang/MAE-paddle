@@ -194,7 +194,7 @@ def main(args):
     
     transform_val = transforms.Compose([
             transforms.DecodeImage(to_rgb=True, channel_first=False),
-            transforms.ResizeImage(size=256, interpolation="bicubic", backend="pil"),  # 3 is bicubic
+            transforms.ResizeImage(resize_short=256, interpolation="bicubic", backend="pil"),  # 3 is bicubic
             transforms.CenterCropImage(size=224),
             transforms.NormalizeImage(scale=1.0/255.0, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], order='hwc'),
             transforms.ToCHWImage()])
@@ -272,12 +272,12 @@ def main(args):
         interpolate_pos_embed(model, checkpoint_model)
 
         # load pre-trained model
-        model.set_state_dict(checkpoint_model, strict=False)
+        model.set_state_dict(checkpoint_model)
 
-        if args.global_pool:
-            assert set(msg.missing_keys) == {'head.weight', 'head.bias', 'fc_norm.weight', 'fc_norm.bias'}
-        else:
-            assert set(msg.missing_keys) == {'head.weight', 'head.bias'}
+        # if args.global_pool:
+        #     assert set(msg.missing_keys) == {'head.weight', 'head.bias', 'fc_norm.weight', 'fc_norm.bias'}
+        # else:
+        #     assert set(msg.missing_keys) == {'head.weight', 'head.bias'}
 
         # manually initialize fc layer
         trunc_normal_(model.head.weight, std=2e-5)
