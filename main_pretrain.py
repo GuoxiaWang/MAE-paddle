@@ -22,7 +22,7 @@ from visualdl import LogWriter as SummaryWriter
 from plsc.data import preprocess as transforms
 
 import util.misc as misc
-import util.datasets as datasets
+from plsc.data import dataset as datasets
 import util.optim_factory as optim_factory
 from util.misc import NativeScalerWithGradNormCount as NativeScaler
 
@@ -124,14 +124,13 @@ def main(args):
     #         transforms.ToTensor(),
     #         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     #dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
-        
+
     transform_train = transforms.Compose([
-            transforms.DecodeImage(to_rgb=True, channel_first=False),
-            transforms.RandCropImage(args.input_size, scale=(0.2, 1.0), interpolation="bicubic"),  # 3 is bicubic
-            transforms.RandFlipImage(),
+            transforms.RandomResizedCrop(args.input_size, scale=(0.2, 1.0), interpolation="bicubic"),  # 3 is bicubic
+            transforms.RandomHorizontalFlip(),
             transforms.NormalizeImage(scale=1.0/255.0, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], order='hwc'),
             transforms.ToCHWImage()])
-    dataset_train = datasets.ImageFolder(os.path.join(args.data_path), transform=transform_train)
+    dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
     print(dataset_train)
 
     if True:  # args.distributed:
@@ -142,7 +141,7 @@ def main(args):
         )
         print("Sampler_train = %s" % str(sampler_train))
     else:
-        sampler_train = paddle.io.RandomSampler(dataset_train)
+        sampler_train = paddle.io.BatchSampler(dataset=dataset_train, batch_size=args.batch_size, shuffle=True, drop_last=True)
 
     if global_rank == 0 and args.log_dir is not None:
         os.makedirs(args.log_dir, exist_ok=True)

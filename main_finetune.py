@@ -25,7 +25,7 @@ from plsc.data import preprocess as transforms
 
 import util.lr_decay as lrd
 import util.misc as misc
-import util.datasets as datasets
+from plsc.data import dataset as datasets
 from util.pos_embed import interpolate_pos_embed
 from util.misc import NativeScalerWithGradNormCount as NativeScaler
 from util.init import trunc_normal_
@@ -170,14 +170,12 @@ def main(args):
     paddle.fluid.set_flags(RELATED_FLAGS_SETTING)
     
     transform_train = transforms.Compose([
-            transforms.DecodeImage(to_rgb=True, channel_first=False),
-            transforms.RandCropImage(args.input_size, interpolation="bicubic"),  # 3 is bicubic
-            transforms.RandFlipImage(),
+            transforms.RandomResizedCrop(args.input_size, interpolation="bicubic"),  # 3 is bicubic
+            transforms.RandomHorizontalFlip(),
             transforms.TimmAutoAugment(config_str=args.aa, interpolation="bicubic", img_size=args.input_size, mean=[0.485, 0.456, 0.406]),
             transforms.NormalizeImage(scale=1.0/255.0, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], order='hwc'),
             transforms.RandomErasing(EPSILON=args.reprob, sl=0.02, sh=1.0/3.0, r1=0.3, attempt=10, use_log_aspect=True, mode=args.remode),
             transforms.ToCHWImage()])
-    
     
     batch_transform_ops = {}
     batch_transform_ops['Mixup'] = {"alpha": args.mixup, "prob": args.mixup_switch_prob, "epsilon": args.smoothing, "class_num": args.nb_classes}
@@ -191,16 +189,12 @@ def main(args):
     
     dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
     
-    
     transform_val = transforms.Compose([
-            transforms.DecodeImage(to_rgb=True, channel_first=False),
-            transforms.ResizeImage(resize_short=256, interpolation="bicubic", backend="pil"),  # 3 is bicubic
-            transforms.CenterCropImage(size=224),
+            transforms.Resize(size=256, interpolation="bicubic", backend="pil"),  # 3 is bicubic
+            transforms.CenterCrop(size=224),
             transforms.NormalizeImage(scale=1.0/255.0, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], order='hwc'),
             transforms.ToCHWImage()])
-    
     dataset_val = datasets.ImageFolder(os.path.join(args.data_path, 'val'), transform=transform_val)
-
 
     if True:  # args.distributed:
         num_tasks = misc.get_world_size()
@@ -241,15 +235,6 @@ def main(args):
         num_workers=args.num_workers,
         use_shared_memory=args.pin_mem,
     )
-
-    # mixup_fn = None
-    # mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
-    # if mixup_active:
-    #     print("Mixup is activated!")
-    #     mixup_fn = Mixup(
-    #         mixup_alpha=args.mixup, cutmix_alpha=args.cutmix, cutmix_minmax=args.cutmix_minmax,
-    #         prob=args.mixup_prob, switch_prob=args.mixup_switch_prob, mode=args.mixup_mode,
-    #         label_smoothing=args.smoothing, num_classes=args.nb_classes)
     
     model = models_vit.__dict__[args.model](
         num_classes=args.nb_classes,
