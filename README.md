@@ -37,10 +37,11 @@ python -m paddle.distributed.launch \
     --dist_eval --data_path ${IMAGENET_DIR}
 ```
 
-|                        | ViT-Base | ViT-Large | ViT-Huge |
-| ---------------------- | -------- | --------- | -------- |
-| official (PyTorch/GPU) | 83.664   | 85.952    | 86.928   |
-| this repo (Paddle/GPU) | 83.568   | -         | -        |
+|                              | ViT-Base | ViT-Large | ViT-Huge |
+| ---------------------------- | -------- | --------- | -------- |
+| official (PyTorch/GPU)       | 83.664   | 85.952    | 86.928   |
+| official rerun (PyTorch/GPU) | 83.36    | -         | -        |
+| this repo (Paddle/GPU)       | 83.34    | -         | -        |
 
 ### Linear Probing
 
@@ -74,10 +75,11 @@ python -m paddle.distributed.launch \
    --dist_eval --data_path ${IMAGENET_DIR}
 ```
 
-|                        | ViT-Base | ViT-Large | ViT-Huge |
-| ---------------------- | -------- | --------- | -------- |
-| official (PyTorch/GPU) | 67.8     | 76.0      | 77.2     |
-| this repo (Paddle/GPU) | 67.7     | -         | -        |
+|                              | ViT-Base | ViT-Large | ViT-Huge |
+| ---------------------------- | -------- | --------- | -------- |
+| official (PyTorch/GPU)       | 67.8     | 76.0      | 77.2     |
+| official rerun (PyTorch/GPU) | 68.05    | -         | -        |
+| this repo (Paddle/GPU)       | 68.08    | -         | -        |
 
 ```
 @Article{MaskedAutoencoders2021,

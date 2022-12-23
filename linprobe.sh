@@ -1,5 +1,5 @@
 #unset PADDLE_TRAINER_ENDPOINTS
-#export PADDLE_NNODES=4
+#export PADDLE_NNODES=1
 #export PADDLE_MASTER="10.67.228.16:12538"
 #export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 #export PADDLE_JOB_ID=MAE
@@ -7,8 +7,8 @@
 IMAGENET_DIR=./dataset/ILSVRC2012/
 
 # 1 for four node, 4 for single node
-ACCUM_ITER=4
-PRETRAIN_CHKPT='mae_pretrain_vit_base.pdparams'
+ACCUM_ITER=1
+PRETRAIN_CHKPT='./output_dir/checkpoint-1599.pd'
 python -m paddle.distributed.launch \
    --nnodes=$PADDLE_NNODES \
    --master=$PADDLE_MASTER \

@@ -21,14 +21,14 @@ import paddle
 import plsc.optimizer
 from visualdl import LogWriter as SummaryWriter
 from plsc.data import preprocess as transforms
+from plsc.data import dataset as datasets
 
 import util.misc as misc
-import util.datasets as datasets
 from util.pos_embed import interpolate_pos_embed
 from util.misc import NativeScalerWithGradNormCount as NativeScaler
 from util.lars import LARS
 from util.crop import MAERandCropImage
-from util.init import trunc_normal_
+from plsc.nn.init import trunc_normal_
 
 import models_vit
 
@@ -125,37 +125,19 @@ def main(args):
     RELATED_FLAGS_SETTING['FLAGS_cudnn_deterministic'] = 1
     paddle.fluid.set_flags(RELATED_FLAGS_SETTING)
 
-    # # linear probe: weak augmentation
-    # transform_train = transforms.Compose([
-    #         RandomResizedCrop(224, interpolation=3),
-    #         transforms.RandomHorizontalFlip(),
-    #         transforms.ToTensor(),
-    #         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    # transform_val = transforms.Compose([
-    #         transforms.Resize(256, interpolation=3),
-    #         transforms.CenterCrop(224),
-    #         transforms.ToTensor(),
-    #         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    # dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
-    # dataset_val = datasets.ImageFolder(os.path.join(args.data_path, 'val'), transform=transform_val)
-    # print(dataset_train)
-    # print(dataset_val)
-    
-    
     # linear probe: weak augmentation
     transform_train = transforms.Compose([
-            transforms.DecodeImage(to_rgb=True, channel_first=False),
-            MAERandCropImage(224, interpolation="bicubic"),
-            transforms.RandFlipImage(),
+            transforms.MAERandCropImage(224, interpolation="bicubic", backend="pil"),
+            transforms.RandomHorizontalFlip(),
             transforms.NormalizeImage(scale=1.0/255.0, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], order='hwc'),
             transforms.ToCHWImage()])
 
     transform_val = transforms.Compose([
-            transforms.DecodeImage(to_rgb=True, channel_first=False),
-            transforms.ResizeImage(resize_short=256, interpolation="bicubic", backend="pil"),  # 3 is bicubic
-            transforms.CenterCropImage(size=224),
+            transforms.Resize(size=256, interpolation="bicubic", backend="pil"),  # 3 is bicubic
+            transforms.CenterCrop(size=224),
             transforms.NormalizeImage(scale=1.0/255.0, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], order='hwc'),
             transforms.ToCHWImage()])
+    
     dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
     dataset_val = datasets.ImageFolder(os.path.join(args.data_path, 'val'), transform=transform_val)
     print(dataset_train)
