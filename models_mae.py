@@ -18,7 +18,7 @@ from plsc.models.vision_transformer import PatchEmbed, Block
 
 from util.pos_embed import get_2d_sincos_pos_embed
 
-from util.init import constant_, normal_, uniform_, xavier_uniform_, zeros_
+from plsc.nn.init import constant_, normal_, uniform_, xavier_uniform_, zeros_
 
 
 class MaskedAutoencoderViT(nn.Layer):
@@ -35,7 +35,8 @@ class MaskedAutoencoderViT(nn.Layer):
         self.patch_embed = PatchEmbed(img_size, patch_size, in_chans, embed_dim)
         num_patches = self.patch_embed.num_patches
 
-        self.cls_token = self.create_parameter(shape=(1, 1, embed_dim), default_initializer=zeros_)
+        self.cls_token = self.create_parameter(shape=(1, 1, embed_dim))
+        zeros_(self.cls_token)
         self.pos_embed = self.create_parameter(shape=(1, num_patches + 1, embed_dim))  # fixed sin-cos embedding
         self.pos_embed.stop_gradient = True
 
@@ -49,7 +50,8 @@ class MaskedAutoencoderViT(nn.Layer):
         # MAE decoder specifics
         self.decoder_embed = nn.Linear(embed_dim, decoder_embed_dim, bias_attr=True)
 
-        self.mask_token = self.create_parameter(shape=(1, 1, decoder_embed_dim), default_initializer=zeros_)
+        self.mask_token = self.create_parameter(shape=(1, 1, decoder_embed_dim))
+        zeros_(self.mask_token)
 
         self.decoder_pos_embed = self.create_parameter(shape=(1, num_patches + 1, decoder_embed_dim))  # fixed sin-cos embedding
         self.decoder_pos_embed.stop_gradient = True
