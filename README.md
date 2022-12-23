@@ -7,6 +7,44 @@
 
 This is a PaddlePaddle/GPU re-implementation of the paper [Masked Autoencoders Are Scalable Vision Learners](https://arxiv.org/abs/2111.06377)
 
+### Pretrain
+```
+#unset PADDLE_TRAINER_ENDPOINTS
+#export PADDLE_NNODES=4
+#export PADDLE_MASTER="10.67.228.16:12538"
+#export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+#export PADDLE_JOB_ID=MAE
+
+# If you use single node
+# batch_size 64, ACCUM_ITER=8, effective batch size: 4096
+# batch_size 256, ACCUM_ITER=2, effective batch size: 4096
+
+# 4 nodes for pretrain
+ACCUM_ITER=1
+IMAGENET_DIR=./dataset/ILSVRC2012/
+python -m paddle.distributed.launch \
+    --nnodes=$PADDLE_NNODES \
+    --master=$PADDLE_MASTER \
+    --devices=$CUDA_VISIBLE_DEVICES \
+    main_pretrain.py \
+    --accum_iter $ACCUM_ITER \
+    --batch_size 128 \
+    --model mae_vit_base_patch16 \
+    --norm_pix_loss \
+    --mask_ratio 0.75 \
+    --epochs 1600 \
+    --warmup_epochs 40 \
+    --blr 1.5e-4 --weight_decay 0.05 \
+    --data_path ${IMAGENET_DIR}
+
+```
+- Here the effective batch size is 128 (`batch_size` per gpu) * 4 (`nodes`) * 8 (gpus per node) = 4096. If memory or # gpus is limited, use `--accum_iter` to maintain the effective batch size, which is `batch_size` (per gpu) * `nodes` * 8 (gpus per node) * `accum_iter`.
+- `blr` is the base learning rate. The actual `lr` is computed by the [linear scaling rule](https://arxiv.org/abs/1706.02677): `lr` = `blr` * effective batch size / 256.
+- Here we use `--norm_pix_loss` as the target for better representation learning. To train a baseline model (e.g., for visualization), use pixel-based construction and turn off `--norm_pix_loss`.
+- Training time is ~56h in 32 A100(40G) GPUs (1600 epochs).
+
+To train ViT-Base or ViT-Huge, set `--model mae_vit_base_patch16` or `--model mae_vit_huge_patch14`.
+
 
 ### Fine-tuning
 
@@ -19,6 +57,8 @@ This is a PaddlePaddle/GPU re-implementation of the paper [Masked Autoencoders A
 
 # batch_size 32, ACCUM_ITER=4, effective batch size: 1024
 # batch_size 128, ACCUM_ITER=1, effective batch size: 1024
+
+# 4 nodes finetune setting
 ACCUM_ITER=1
 PRETRAIN_CHKPT='mae_pretrain_vit_base.pdparams'
 IMAGENET_DIR=./dataset/ILSVRC2012/
@@ -55,8 +95,8 @@ python -m paddle.distributed.launch \
 
 # batch_size 512, ACCUM_ITER=4, effective batch size: 16384
 
-# 1 for four node, 4 for single node
-ACCUM_ITER=4
+# 4 nodes finetune setting
+ACCUM_ITER=1
 PRETRAIN_CHKPT='mae_pretrain_vit_base.pdparams'
 IMAGENET_DIR=./dataset/ILSVRC2012/
 python -m paddle.distributed.launch \
