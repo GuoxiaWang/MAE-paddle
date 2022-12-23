@@ -26,7 +26,6 @@ from plsc.data import dataset as datasets
 import util.misc as misc
 from util.pos_embed import interpolate_pos_embed
 from util.misc import NativeScalerWithGradNormCount as NativeScaler
-from util.lars import LARS
 from util.crop import MAERandCropImage
 from plsc.nn.init import trunc_normal_
 
@@ -248,7 +247,7 @@ def main(args):
         model = paddle.DataParallel(model)
         model_without_ddp = model._layers
 
-    optimizer = LARS(model_without_ddp.head.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    optimizer = plsc.optimizer.MomentumLARS(model_without_ddp.head.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     print(optimizer)
     loss_scaler = NativeScaler()
 
