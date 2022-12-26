@@ -67,7 +67,7 @@ To train ViT-Base or ViT-Huge, set `--model mae_vit_base_patch16` or `--model ma
 
 # 4 nodes finetune setting
 ACCUM_ITER=1
-PRETRAIN_CHKPT='mae_pretrain_vit_base.pdparams'
+PRETRAIN_CHKPT='output_dir/checkpoint-1599.pd'
 IMAGENET_DIR=./dataset/ILSVRC2012/
 python -m paddle.distributed.launch \
     --nnodes=$PADDLE_NNODES \
@@ -104,7 +104,7 @@ python -m paddle.distributed.launch \
 
 # 4 nodes finetune setting
 ACCUM_ITER=1
-PRETRAIN_CHKPT='mae_pretrain_vit_base.pdparams'
+PRETRAIN_CHKPT='output_dir/checkpoint-1599.pd'
 IMAGENET_DIR=./dataset/ILSVRC2012/
 python -m paddle.distributed.launch \
    --nnodes=$PADDLE_NNODES \
