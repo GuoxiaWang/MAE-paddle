@@ -7,6 +7,13 @@
 
 This is a PaddlePaddle/GPU re-implementation of the paper [Masked Autoencoders Are Scalable Vision Learners](https://arxiv.org/abs/2111.06377)
 
+### Installation
+PaddlePaddle 2.4 is required.
+```
+pip install paddlepaddle-gpu==2.4.1
+pip install -r requirements.txt
+```
+
 ### Pretrain
 ```
 #unset PADDLE_TRAINER_ENDPOINTS
